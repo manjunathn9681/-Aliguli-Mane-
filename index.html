@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>Chennemane - Aliguli Mane</title>
+    <meta name="description" content="Premium 3D implementation of the traditional Karnataka mancala game, Chennemane (Aliguli Mane). Play locally or against AI.">
+    <meta name="theme-color" content="#0F0906">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Three.js (CDN for convenience and zero build step) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body class="dark">
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container"></div>
+    
+    <!-- HTML Labels for Pits mapped over 3D -->
+    <div id="pitLabels"></div>
+
+    <!-- UI Screens Layer -->
+    <div class="ui-layer" id="ui-layer">
+        
+        <!-- ==================== SPLASH / MAIN MENU ==================== -->
+        <div id="screen-splash" class="ui-screen active">
+            <div class="splash-content">
+                <div class="splash-logo"></div>
+                <h1 data-i18n="appName">Chennemane</h1>
+                <h2 data-i18n="subtitle">Aliguli Mane</h2>
+                <p data-i18n="tagline">The Royal Game of Karnataka</p>
+                
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-played">0</span>
+                        <span class="stat-label" data-i18n="gamesPlayed">Played</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-wins">0</span>
+                        <span class="stat-label" data-i18n="totalWins">Wins</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-rate">-</span>
+                        <span class="stat-label" data-i18n="winRate">Rate</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="btn-play">▶ <span data-i18n="play">Play Game</span></button>
+                <button class="btn" id="btn-resume-game" style="display:none; border-color:var(--c-primary); color:var(--c-primary);"><span data-i18n="resumeGame">Resume Game</span></button>
+                <button class="btn btn-settings">⚙ <span data-i18n="settings">Settings</span></button>
+                <button class="btn btn-rules">📖 <span data-i18n="rules">Rules</span></button>
+            </div>
+        </div>
+
+        <!-- ==================== MODE SELECT ==================== -->
+        <div id="screen-mode" class="ui-screen">
+            <div class="modal-content">
+                <h2 data-i18n="chooseModeTitle">Choose Game Mode</h2>
+                
+                <button class="btn btn-primary mode-btn" data-mode="local">👥 <span data-i18n="twoPlayers">Two Players (Local)</span></button>
+                
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--c-border);">
+                
+                <h3 style="margin-bottom:1rem;" data-i18n="vsAI">vs Computer</h3>
+                <button class="btn mode-btn" data-mode="easy">🤖 <span data-i18n="easy">Easy</span></button>
+                <button class="btn mode-btn" data-mode="medium">🤖 <span data-i18n="medium">Medium</span></button>
+                <button class="btn mode-btn" data-mode="hard">🧠 <span data-i18n="hard">Hard</span></button>
+                
+                <button class="btn" id="btn-back-mode" style="margin-top: 2rem;" data-i18n="backMenu">← Back</button>
+            </div>
+        </div>
+
+        <!-- ==================== GAME HUD ==================== -->
+        <div id="screen-game" class="ui-screen">
+            <!-- Top HUD (Player 2 / AI) -->
+            <div class="hud-top">
+                <div class="player-panel" id="hud-p2">
+                    <div class="player-score" id="hud-p2-score">0</div>
+                    <div class="player-name" id="hud-p2-name">Player 2</div>
+                </div>
+                <div class="controls-group">
+                    <button class="btn-icon" id="btn-pause">⏸</button>
+                </div>
+                <div class="turn-indicator" id="hud-turn-msg">YOUR TURN</div>
+            </div>
+
+            <!-- Status Message (Center) -->
+            <div id="hud-status-msg"></div>
+
+            <!-- Bottom HUD (Player 1) -->
+            <div class="hud-bottom">
+                <div class="controls-group">
+                    <button class="btn-icon" id="btn-undo">↩</button>
+                </div>
+                <div class="player-panel" id="hud-p1">
+                    <div class="player-score" id="hud-p1-score">0</div>
+                    <div class="player-name" id="hud-p1-name">Player 1</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODALS ==================== -->
+        
+        <!-- Pause Modal -->
+        <div id="modal-pause" class="modal-overlay">
+            <div class="modal-content" style="text-align: center;">
+                <h2 data-i18n="pause">Paused</h2>
+                <button class="btn btn-primary" id="btn-resume-pause" data-i18n="resume">▶ Resume</button>
+                <button class="btn btn-rules" data-i18n="rules">📖 Rules</button>
+                <button class="btn btn-settings" data-i18n="settings">⚙ Settings</button>
+                <button class="btn" id="btn-restart">🔄 <span data-i18n="restart">Restart</span></button>
+                <button class="btn" id="btn-home" data-i18n="home">🏠 Main Menu</button>
+            </div>
+        </div>
+
+        <!-- Rules Modal -->
+        <div id="modal-rules" class="modal-overlay">
+            <div class="modal-content">
+                <h2 data-i18n="rulesTitle">How to Play Chennemane</h2>
+                <div class="rules-content" id="rules-content-body">
+                    <!-- Populated by JS i18n -->
+                </div>
+                <button class="btn btn-primary btn-close-modal" style="width: 100%;">OK</button>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="modal-settings" class="modal-overlay">
+            <div class="modal-content">
+                <h2 data-i18n="settings">Settings</h2>
+                
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label data-i18n="language">Language</label>
+                        <button class="btn" id="btn-lang">EN / ಕನ್</button>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n="theme">Theme</label>
+                        <button class="btn" id="btn-theme">Dark</button>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n="haptic">Haptic Feedback</label>
+                        <button class="btn" id="btn-haptic">On</button>
+                    </div>
+                </div>
+                
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--c-border);">
+                
+                <div class="setting-item" style="margin-bottom: 1rem;">
+                    <label data-i18n="musicVol">Music Volume</label>
+                    <input type="range" id="slide-music" min="0" max="1" step="0.1" value="0.4">
+                </div>
+                <div class="setting-item" style="margin-bottom: 2rem;">
+                    <label data-i18n="sfxVol">Sound Volume</label>
+                    <input type="range" id="slide-sfx" min="0" max="1" step="0.1" value="0.8">
+                </div>
+                
+                <button class="btn btn-primary btn-close-modal" style="width: 100%;">Done</button>
+            </div>
+        </div>
+
+        <!-- Win Screen Modal -->
+        <div id="modal-win" class="modal-overlay">
+            <div class="modal-content" style="text-align: center;">
+                <h1 id="win-title">Player 1 Wins!</h1>
+                
+                <div class="win-scores">
+                    <div class="win-score-box">
+                        <h3 data-i18n="player1">Player 1</h3>
+                        <div class="score" id="win-p1-score">0</div>
+                    </div>
+                    <div class="win-score-box">
+                        <h3 id="win-p2-label" data-i18n="player2">Player 2</h3>
+                        <div class="score" id="win-p2-score">0</div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="btn-play-again" data-i18n="playAgain">▶ Play Again</button>
+                <button class="btn" id="btn-win-home" data-i18n="mainMenu">🏠 Main Menu</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Application Scripts -->
+    <script src="js/settings.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/effects.js"></script>
+    
+    <script src="js/board.js"></script>
+    <script src="js/stones.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
