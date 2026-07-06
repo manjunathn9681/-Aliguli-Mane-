@@ -74,7 +74,7 @@ const Settings = (() => {
             yes: 'Yes',
             cancel: 'Cancel',
             noMoves: 'No moves available!',
-            selectPit: 'Select a pit',
+            selectPit: 'Select one of your non-empty pits.',
             capturing: 'Capturing!',
             backMenu: '← Back',
             chooseModeTitle: 'Choose Game Mode'
@@ -134,7 +134,7 @@ const Settings = (() => {
             yes: 'ಹೌದು',
             cancel: 'ರದ್ದು',
             noMoves: 'ಯಾವ ಚಲನೆಯೂ ಲಭ್ಯವಿಲ್ಲ!',
-            selectPit: 'ಗುಂಡಿ ಆಯ್ಕೆ ಮಾಡಿ',
+            selectPit: 'ನಿಮ್ಮ ಕಡೆಯ ಖಾಲಿ ಇಲ್ಲದ ಗುಂಡಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ.',
             capturing: 'ಸಂಗ್ರಹಿಸುತ್ತಿದ್ದಾರೆ!',
             backMenu: '← ಹಿಂದೆ',
             chooseModeTitle: 'ಆಟದ ವಿಧ ಆರಿಸಿ'

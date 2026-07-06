@@ -72,7 +72,13 @@
                 <button class="btn mode-btn" data-mode="medium">🤖 <span data-i18n="medium">Medium</span></button>
                 <button class="btn mode-btn" data-mode="hard">🧠 <span data-i18n="hard">Hard</span></button>
                 
-                <button class="btn" id="btn-back-mode" style="margin-top: 2rem;" data-i18n="backMenu">← Back</button>
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--c-border);">
+                
+                <h3 style="margin-bottom:1rem;">🎯 Custom Mode</h3>
+                <button class="btn btn-custom mode-btn" data-mode="custom" id="btn-mode-custom" style="border-color:#00FFCC; color:#00FFCC; box-shadow: 0 0 16px rgba(0,255,204,0.3);">🎯 <span>Custom (Manual Sow)</span></button>
+                <p style="font-size:0.78rem; color:var(--c-text-muted); text-align:center; max-width:260px; margin: -0.5rem auto 1rem;">Tap each pit manually to place one seed at a time</p>
+                
+                <button class="btn" id="btn-back-mode" style="margin-top: 1rem;" data-i18n="backMenu">← Back</button>
             </div>
         </div>
 
@@ -92,6 +98,20 @@
 
             <!-- Status Message (Center) -->
             <div id="hud-status-msg"></div>
+
+            <!-- Seeds-in-Hand badge (Custom Mode only) -->
+            <div id="hud-seeds-in-hand" style="display:none;">
+                <span class="sih-icon">🌱</span>
+                <span id="hud-seeds-count">0</span>
+                <span class="sih-label">in hand</span>
+            </div>
+
+            <!-- Custom Mode Phase 0 Toast -->
+            <div id="custom-mode-toast">
+                <span class="toast-icon">🌱</span>
+                <span id="custom-toast-text"></span>
+            </div>
+
 
             <!-- Bottom HUD (Player 1) -->
             <div class="hud-bottom">

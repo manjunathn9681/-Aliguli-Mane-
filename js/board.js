@@ -261,7 +261,7 @@ class Board {
             // --- Pit well (concave bowl effect with lathe) ---
             const pts = [];
             const steps = 18, R = 0.68, depth = 0.38;
-            for (let s = 0; s <= steps; s++) {
+            for (let s = steps; s >= 0; s--) {
                 const t  = s / steps;
                 const r  = R * Math.sin(t * Math.PI * 0.5 + Math.PI * 0.5) * 0.97;
                 const yy = -t * depth;
@@ -269,20 +269,26 @@ class Board {
             }
             const latheGeo = new THREE.LatheGeometry(pts, 28);
             const pitMesh  = new THREE.Mesh(latheGeo, pitBaseMat.clone());
-            pitMesh.position.set(pos.x, pos.y + 0.28, pos.z);
-            pitMesh.rotation.x = Math.PI;
+            pitMesh.position.set(pos.x, 0.28, pos.z);
             pitMesh.receiveShadow = true;
-            pitMesh.userData.pitIndex  = i;
-            pitMesh.userData.isPit     = true;
-            pitMesh.userData.player    = i < 7 ? 0 : 1;
-            this.pitMeshes.push(pitMesh);
             this.group.add(pitMesh);
+
+            // --- Invisible Hit Mesh for foolproof Raycasting ---
+            const hitGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.4, 16);
+            const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+            const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+            hitMesh.position.set(pos.x, 0.28, pos.z);
+            hitMesh.userData.pitIndex  = i;
+            hitMesh.userData.isPit     = true;
+            hitMesh.userData.player    = i < 7 ? 0 : 1;
+            this.pitMeshes.push(hitMesh);
+            this.group.add(hitMesh);
 
             // --- Pit rim ring ---
             const rimGeo  = new THREE.TorusGeometry(0.71, 0.055, 10, 36);
             const rimMesh = new THREE.Mesh(rimGeo, rimMat);
             rimMesh.rotation.x = Math.PI / 2;
-            rimMesh.position.set(pos.x, pos.y + 0.285, pos.z);
+            rimMesh.position.set(pos.x, 0.285, pos.z);
             rimMesh.receiveShadow = true;
             this.group.add(rimMesh);
 
@@ -299,7 +305,7 @@ class Board {
             });
             const glowRing = new THREE.Mesh(glowGeo, glowMat);
             glowRing.rotation.x = Math.PI / 2;
-            glowRing.position.set(pos.x, pos.y + 0.295, pos.z);
+            glowRing.position.set(pos.x, 0.295, pos.z);
             this.glowRings.push(glowRing);
             this.group.add(glowRing);
         }
@@ -410,11 +416,55 @@ class Board {
             r.material.opacity = 0;
         });
         this._pulseIndex = -1;
+        this._nextValidIndex = -1;
+    }
+
+    // Cyan pulsing ring — marks the single pit the player MUST tap next in Custom mode
+    highlightNextValidPit(index) {
+        this._nextValidIndex = index;
+        this._nextValidTime  = 0;
+    }
+
+    clearNextValidHighlight() {
+        if (this._nextValidIndex >= 0) {
+            const r = this.glowRings[this._nextValidIndex];
+            if (r) { r.material.emissiveIntensity = 0; r.material.opacity = 0; }
+        }
+        this._nextValidIndex = -1;
     }
 
     pulsePit(index) {
         this._pulseIndex = index;
         this._pulseTime  = 0;
+    }
+
+    setHover(index) {
+        this._hoverIndex = index;
+        this._hoverTime = 0;
+    }
+
+    clearHover() {
+        if (this._hoverIndex !== -1 && this._hoverIndex !== this._pulseIndex) {
+            this.highlightPit(this._hoverIndex, 0xFFCC00, 0); // hide
+        }
+        this._hoverIndex = -1;
+    }
+
+    highlightValidMoves(validIndices) {
+        // First clear all existing highlights that aren't hovering or pulsing
+        this.glowRings.forEach((r, i) => {
+            if (i !== this._pulseIndex && i !== this._hoverIndex) {
+                r.material.emissiveIntensity = 0;
+                r.material.opacity = 0;
+            }
+        });
+        
+        // Then highlight the valid ones mildly
+        validIndices.forEach(idx => {
+            if (idx !== this._pulseIndex && idx !== this._hoverIndex) {
+                this.highlightPit(idx, 0x00FF00, 0.4); // subtle green glow
+            }
+        });
     }
 
     // ── Label update (called every frame) ────────────────────
@@ -431,7 +481,7 @@ class Board {
             const sy = (-proj.y * 0.5 + 0.5) * h;
 
             const lbl = this.pitLabels[i];
-            lbl.style.transform = `translate(-50%,-50%) translate(${sx}px,${sy}px)`;
+            lbl.style.transform = `translate(-50%,-180%) translate(${sx}px,${sy}px)`;
             lbl.textContent     = pits[i];
 
             // Style based on state
@@ -442,11 +492,26 @@ class Board {
 
     // ── Animation update ─────────────────────────────────────
     update(dt) {
-        if (this._pulseIndex < 0) return;
-        this._pulseTime += dt;
-        const intensity = 1.2 + Math.sin(this._pulseTime * 7) * 0.6;
-        this.highlightPit(this._pulseIndex, 0xFFCC00, intensity);
+        if (this._pulseIndex >= 0) {
+            this._pulseTime += dt;
+            const intensity = 1.2 + Math.sin(this._pulseTime * 7) * 0.6;
+            this.highlightPit(this._pulseIndex, 0xFFCC00, intensity);
+        }
+        
+        if (this._hoverIndex >= 0 && this._hoverIndex !== this._pulseIndex) {
+            this._hoverTime += dt;
+            const intensity = 0.5 + Math.sin(this._hoverTime * 4) * 0.3;
+            this.highlightPit(this._hoverIndex, 0xFFFFFF, intensity);
+        }
+
+        // Cyan pulse for Custom Mode "next valid pit"
+        if (this._nextValidIndex >= 0 && this._nextValidIndex !== this._pulseIndex) {
+            this._nextValidTime = (this._nextValidTime || 0) + dt;
+            const intensity = 1.0 + Math.sin(this._nextValidTime * 9) * 0.7;
+            this.highlightPit(this._nextValidIndex, 0x00FFCC, intensity);
+        }
     }
+
 
     // ── Helper: world-space position of a pit's center ───────
     getPitWorldPos(index) {
