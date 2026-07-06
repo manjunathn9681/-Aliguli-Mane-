@@ -82,6 +82,28 @@
             </div>
         </div>
 
+        <!-- ==================== PLAYER SETUP ==================== -->
+        <div id="screen-setup" class="ui-screen">
+            <div class="modal-content">
+                <h2>Player Setup</h2>
+                
+                <div class="settings-grid" style="margin-top: 1.5rem; display: block;">
+                    <div style="margin-bottom: 1.5rem; text-align: left;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--c-text-muted);">👤 Player 1</label>
+                        <input type="text" id="input-p1-name" placeholder="Enter Player 1 Name" maxlength="20" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text); font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+                    </div>
+                    
+                    <div style="margin-bottom: 2rem; text-align: left;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--c-text-muted);">👤 Player 2</label>
+                        <input type="text" id="input-p2-name" placeholder="Enter Player 2 Name" maxlength="20" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text); font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="btn-start-game" style="width: 100%;">▶ Start Game</button>
+                <button class="btn" id="btn-back-setup" style="margin-top: 1rem; width: 100%;">← Back</button>
+            </div>
+        </div>
+
         <!-- ==================== GAME HUD ==================== -->
         <div id="screen-game" class="ui-screen">
             <!-- Top HUD (Player 2 / AI) -->
@@ -91,6 +113,7 @@
                     <div class="player-name" id="hud-p2-name">Player 2</div>
                 </div>
                 <div class="controls-group">
+                    <button class="btn-icon" id="btn-camera" title="Toggle Camera">📷</button>
                     <button class="btn-icon" id="btn-pause">⏸</button>
                 </div>
                 <div class="turn-indicator" id="hud-turn-msg">YOUR TURN</div>
@@ -192,7 +215,7 @@
                 
                 <div class="win-scores">
                     <div class="win-score-box">
-                        <h3 data-i18n="player1">Player 1</h3>
+                        <h3 id="win-p1-label" data-i18n="player1">Player 1</h3>
                         <div class="score" id="win-p1-score">0</div>
                     </div>
                     <div class="win-score-box">

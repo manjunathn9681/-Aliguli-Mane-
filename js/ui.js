@@ -9,6 +9,7 @@ class UIManager {
             screens: {
                 splash: document.getElementById('screen-splash'),
                 mode: document.getElementById('screen-mode'),
+                setup: document.getElementById('screen-setup'),
                 game: document.getElementById('screen-game'),
                 pause: document.getElementById('modal-pause'),
                 rules: document.getElementById('modal-rules'),
@@ -56,10 +57,13 @@ class UIManager {
         this.els.hud.p1Score.textContent = game.scores[0];
         this.els.hud.p2Score.textContent = game.scores[1];
         
+        const p1Name = Settings.get('player1Name') || Settings.t('player1');
+        const p2Name = Settings.get('player2Name') || Settings.t('player2');
+
         // Names
-        this.els.hud.p1Name.textContent = Settings.t('player1');
-        if (mode === 'local') {
-            this.els.hud.p2Name.textContent = Settings.t('player2');
+        this.els.hud.p1Name.textContent = p1Name;
+        if (mode === 'local' || mode === 'custom') {
+            this.els.hud.p2Name.textContent = p2Name;
         } else {
             this.els.hud.p2Name.textContent = Settings.t('computer') + ` (${Settings.t(mode)})`;
         }
@@ -70,9 +74,9 @@ class UIManager {
         
         // Turn message
         if (game.currentPlayer === 0) {
-            this.els.hud.turnMsg.textContent = Settings.t('yourTurn');
+            this.els.hud.turnMsg.textContent = `${p1Name}'s Turn`;
         } else {
-            this.els.hud.turnMsg.textContent = mode === 'local' ? Settings.t('player2') + ' ' + Settings.t('yourTurn') : Settings.t('computer') + '...';
+            this.els.hud.turnMsg.textContent = (mode === 'local' || mode === 'custom') ? `${p2Name}'s Turn` : Settings.t('computer') + '...';
         }
     }
     
@@ -98,12 +102,23 @@ class UIManager {
         p1s.textContent = game.scores[0];
         p2s.textContent = game.scores[1];
         
+        const p1Name = Settings.get('player1Name') || Settings.t('player1');
+        const p2Name = Settings.get('player2Name') || Settings.t('player2');
+
+        const p1Label = document.getElementById('win-p1-label');
+        if (p1Label) p1Label.textContent = p1Name;
+        
+        const p2Label = document.getElementById('win-p2-label');
+        if (p2Label) {
+            p2Label.textContent = (mode === 'local' || mode === 'custom') ? p2Name : Settings.t('computer');
+        }
+
         if (game.winner === 'draw') {
             title.textContent = Settings.t('draw');
         } else {
             let winnerName = '';
-            if (game.winner === 0) winnerName = Settings.t('player1');
-            else winnerName = mode === 'local' ? Settings.t('player2') : Settings.t('computer');
+            if (game.winner === 0) winnerName = p1Name;
+            else winnerName = (mode === 'local' || mode === 'custom') ? p2Name : Settings.t('computer');
             
             title.textContent = winnerName + ' ' + Settings.t('wins');
         }

@@ -8,30 +8,48 @@ class CameraManager {
         this.camera = camera;
         this.renderer = renderer;
         
-        // Initial setup
-        this.camera.position.set(0, 16, 12);
+        this.isTopView = true;
+        this.savedCameraState = { 
+            pos: new THREE.Vector3(0, 16, 12), 
+            target: new THREE.Vector3(0, 0, 0) 
+        };
+
+        // Calculate perfect top-down height based on screen
+        const topY = this.getOptimalTopHeight();
+        this.camera.position.set(0, topY, 0);
         this.camera.lookAt(0, 0, 0);
 
-        // Include OrbitControls from Three.js examples (loaded in index.html)
+        // Include OrbitControls from Three.js examples
         if (typeof THREE.OrbitControls !== 'undefined') {
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
             this.controls.enableDamping = true;
             this.controls.dampingFactor = 0.05;
             this.controls.minDistance = 8;
-            this.controls.maxDistance = 25;
-            this.controls.maxPolarAngle = Math.PI / 2 - 0.1; // Don't go below ground
-            this.controls.minPolarAngle = Math.PI / 6;       // Don't go too top-down
+            this.controls.maxDistance = 35;
+            this.controls.maxPolarAngle = Math.PI / 2 - 0.1;
+            this.controls.minPolarAngle = 0; // Allow perfect top down
             
-            // Limit azimuth (rotation around board)
             this.controls.minAzimuthAngle = -Math.PI / 3;
             this.controls.maxAzimuthAngle = Math.PI / 3;
             
-            this.controls.enablePan = false; // Disable panning for fixed board view
+            this.controls.enablePan = false; // Never pan away from center
+            this.controls.enableRotate = false; // Locked in Top View initially
         }
         
         this.isAnimating = false;
         this.animTargetPos = new THREE.Vector3();
         this.animTargetLook = new THREE.Vector3();
+    }
+
+    getOptimalTopHeight() {
+        const aspect = window.innerWidth / window.innerHeight;
+        // Board is approx 18 units wide, 8 units deep (with margins)
+        const fovRad = (this.camera.fov * Math.PI) / 180;
+        const heightForWidth = (18 / 2) / Math.tan(fovRad / 2) / aspect;
+        const heightForDepth = (8 / 2) / Math.tan(fovRad / 2);
+        
+        let targetHeight = Math.max(heightForWidth, heightForDepth);
+        return Math.max(15, Math.min(targetHeight, 35));
     }
 
     update() {
@@ -54,12 +72,43 @@ class CameraManager {
         );
     }
     
-    // Reset to default angled top-down
+    // Reset to default top-down
     resetView() {
+        this.isTopView = true;
         this._animateCameraTo(
-            new THREE.Vector3(0, 16, 12),
+            new THREE.Vector3(0, this.getOptimalTopHeight(), 0),
             new THREE.Vector3(0, 0, 0)
         );
+    }
+    
+    // Toggle Top View
+    toggleTopView(onToggleComplete) {
+        if (this.isTopView) {
+            // Restore previous 3D view
+            this._animateCameraTo(this.savedCameraState.pos, this.savedCameraState.target, 0.6, () => {
+                this.isTopView = false;
+                this.stopAnimation(false);
+                if (onToggleComplete) onToggleComplete(false);
+            });
+        } else {
+            // Save current 3D view
+            this.savedCameraState.pos.copy(this.camera.position);
+            if (this.controls) {
+                this.savedCameraState.target.copy(this.controls.target);
+            } else {
+                this.savedCameraState.target.copy(this.camera.position).add(new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion));
+            }
+
+            // Animate to top view
+            const topPos = new THREE.Vector3(0, this.getOptimalTopHeight(), 0); // Straight up, fitted to screen
+            const topLookAt = new THREE.Vector3(0, 0, 0);
+
+            this._animateCameraTo(topPos, topLookAt, 0.6, () => {
+                this.isTopView = true;
+                this.stopAnimation(); // Handled by stopAnimation checking isTopView
+                if (onToggleComplete) onToggleComplete(true);
+            });
+        }
     }
     
     // Victory flyaround
@@ -94,11 +143,18 @@ class CameraManager {
         this.isAnimating = false;
         if (this.controls) {
             this.controls.enabled = true;
-            this.controls.target.set(0,0,0); // reset look target for orbit
+            this.controls.enablePan = false;
+            
+            if (this.isTopView) {
+                this.controls.enableRotate = false;
+            } else {
+                this.controls.enableRotate = true;
+            }
+            this.controls.target.set(0, 0, 0); // Always keep board centered
         }
     }
 
-    _animateCameraTo(targetPos, targetLookAt) {
+    _animateCameraTo(targetPos, targetLookAt, duration = 1.0, onComplete = null) {
         this.isAnimating = true;
         if (this.controls) this.controls.enabled = false;
         
@@ -110,7 +166,6 @@ class CameraManager {
         const endDir = targetLookAt.clone().sub(targetPos).normalize();
 
         let t = 0;
-        const duration = 1.0; // seconds
 
         const update = () => {
             if (!this.isAnimating) return;
@@ -119,7 +174,11 @@ class CameraManager {
             if (t >= 1) {
                 this.camera.position.copy(targetPos);
                 this.camera.lookAt(targetLookAt);
-                this.stopAnimation();
+                if (onComplete) {
+                    onComplete();
+                } else {
+                    this.stopAnimation();
+                }
                 return;
             }
             

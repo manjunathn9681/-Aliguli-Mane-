@@ -12,7 +12,9 @@ const Settings = (() => {
         theme: 'dark',
         haptics: true,
         musicVolume: 0.4,
-        sfxVolume: 0.8
+        sfxVolume: 0.8,
+        player1Name: 'Player 1',
+        player2Name: 'Player 2'
     };
 
     let current = { ...defaults };

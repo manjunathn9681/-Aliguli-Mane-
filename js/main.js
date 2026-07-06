@@ -163,7 +163,7 @@ async function handleCustomClick(pitIndex) {
     }
 
     // Animate one seed arc
-    const stonesInHand = stonesManager.stones.filter(s => s.userData.state === 'moving');
+    const stonesInHand = stonesManager.stones.filter(s => s.userData.state === 'in-hand');
     if (stonesInHand.length > 0) {
         const stone = stonesInHand[stonesInHand.length - 1];
         stone.userData.state = 'sowing';
@@ -379,6 +379,11 @@ function init() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // If in top view, adjust zoom dynamically
+        if (cameraManager && cameraManager.isTopView && !cameraManager.isAnimating) {
+            camera.position.y = cameraManager.getOptimalTopHeight();
+        }
     });
 
     // 5. Setup DOM Event Listeners
@@ -404,13 +409,52 @@ function setupEventListeners() {
         }
     });
 
-    // Mode Selection
+    // Mode Selection -> Setup Screen
+    let pendingGameMode = null;
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             AudioManager.playTap();
-            const mode = e.currentTarget.getAttribute('data-mode');
-            startGame(mode);
+            pendingGameMode = e.currentTarget.getAttribute('data-mode');
+            
+            const p1Input = document.getElementById('input-p1-name');
+            const p2Input = document.getElementById('input-p2-name');
+            
+            p1Input.value = Settings.get('player1Name') || 'Player 1';
+            
+            if (pendingGameMode === 'local' || pendingGameMode === 'custom') {
+                p2Input.value = Settings.get('player2Name') || 'Player 2';
+                p2Input.disabled = false;
+                p2Input.style.opacity = '1';
+            } else {
+                p2Input.value = Settings.t('computer');
+                p2Input.disabled = true;
+                p2Input.style.opacity = '0.5';
+            }
+            
+            ui.showScreen('setup');
         });
+    });
+    
+    document.getElementById('btn-back-setup').addEventListener('click', () => {
+        AudioManager.playTap();
+        ui.showScreen('mode');
+    });
+
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+        AudioManager.playTap();
+        
+        let p1 = document.getElementById('input-p1-name').value.trim();
+        let p2 = document.getElementById('input-p2-name').value.trim();
+        
+        if (!p1) p1 = 'Player 1';
+        if (!p2) p2 = 'Player 2';
+        
+        Settings.set('player1Name', p1);
+        if (pendingGameMode === 'local' || pendingGameMode === 'custom') {
+            Settings.set('player2Name', p2);
+        }
+        
+        startGame(pendingGameMode);
     });
     
     document.getElementById('btn-back-mode').addEventListener('click', () => {
@@ -419,6 +463,28 @@ function setupEventListeners() {
     });
 
     // In-Game HUD & Pause
+    const btnCamera = document.getElementById('btn-camera');
+    // Set default active state for Top View
+    btnCamera.style.color = 'var(--c-primary)';
+    btnCamera.style.borderColor = 'var(--c-primary)';
+
+    btnCamera.addEventListener('click', (e) => {
+        AudioManager.playTap();
+        const btn = e.currentTarget;
+        cameraManager.toggleTopView((isTopView) => {
+            if (isTopView) {
+                btn.style.color = 'var(--c-primary)';
+                btn.style.borderColor = 'var(--c-primary)';
+                ui.setStatus('Top View Enabled');
+            } else {
+                btn.style.color = '';
+                btn.style.borderColor = '';
+                ui.setStatus('3D View Enabled');
+            }
+            setTimeout(() => ui.setStatus(''), 2000);
+        });
+    });
+
     document.getElementById('btn-pause').addEventListener('click', () => {
         AudioManager.playTap();
         ui.showScreen('pause');
@@ -649,7 +715,7 @@ function processGameEvent(ev) {
         } 
         else if (ev.type === 'sow') {
             console.log(`[Animation] Sowing stone into pit ${ev.pit}`);
-            const stonesInHand = stonesManager.stones.filter(s => s.userData.state === 'moving');
+            const stonesInHand = stonesManager.stones.filter(s => s.userData.state === 'in-hand');
             if (stonesInHand.length > 0) {
                 const stoneToSow = stonesInHand[stonesInHand.length - 1]; // pop last
                 stoneToSow.userData.state = 'sowing';
