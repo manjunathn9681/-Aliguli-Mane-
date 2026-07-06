@@ -14,7 +14,9 @@ const Settings = (() => {
         musicVolume: 0.4,
         sfxVolume: 0.8,
         player1Name: 'Player 1',
-        player2Name: 'Player 2'
+        player2Name: 'Player 2',
+        fpsLimit: 'auto',
+        showFps: false
     };
 
     let current = { ...defaults };
@@ -79,7 +81,13 @@ const Settings = (() => {
             selectPit: 'Select one of your non-empty pits.',
             capturing: 'Capturing!',
             backMenu: '← Back',
-            chooseModeTitle: 'Choose Game Mode'
+            chooseModeTitle: 'Choose Game Mode',
+            fpsLimit: 'FPS Limit',
+            fpsAuto: 'Auto (Recommended)',
+            fpsUnlimited: 'Unlimited',
+            performance: 'Performance',
+            showFps: 'Show Monitor',
+            fpsNotSupported: '{fps} FPS is not supported on this device. Using {fallback} FPS instead.'
         },
         kn: {
             appName: 'ಚೆನ್ನೆಮಾನೆ',
@@ -139,7 +147,13 @@ const Settings = (() => {
             selectPit: 'ನಿಮ್ಮ ಕಡೆಯ ಖಾಲಿ ಇಲ್ಲದ ಗುಂಡಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ.',
             capturing: 'ಸಂಗ್ರಹಿಸುತ್ತಿದ್ದಾರೆ!',
             backMenu: '← ಹಿಂದೆ',
-            chooseModeTitle: 'ಆಟದ ವಿಧ ಆರಿಸಿ'
+            chooseModeTitle: 'ಆಟದ ವಿಧ ಆರಿಸಿ',
+            fpsLimit: 'FPS ಮಿತಿ',
+            fpsAuto: 'ಸ್ವಯಂ (ಶಿಫಾರಸು)',
+            fpsUnlimited: 'ಮಿತಿಯಿಲ್ಲದ',
+            performance: 'ಕಾರ್ಯಕ್ಷಮತೆ',
+            showFps: 'ಮಾನಿಟರ್ ತೋರಿಸು',
+            fpsNotSupported: '{fps} FPS ಈ ಸಾಧನದಲ್ಲಿ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ. ಬದಲಾಗಿ {fallback} FPS ಬಳಸಲಾಗುತ್ತಿದೆ.'
         }
     };
 

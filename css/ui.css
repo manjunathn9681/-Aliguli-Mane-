@@ -205,3 +205,55 @@ input[type=range]::-webkit-slider-runnable-track {
 }
 .win-score-box h3 { font-size: 1rem; color: var(--c-text-muted); }
 .win-score-box .score { font-size: 3rem; color: var(--c-primary); }
+
+/* Performance Monitor */
+#perf-monitor {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid var(--c-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #00FFCC;
+    font-family: monospace;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1000;
+}
+.perf-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 2px;
+}
+.perf-label {
+    color: var(--c-text-muted);
+}
+
+/* FPS Compatibility Toast */
+#fps-toast {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(40, 40, 40, 0.9);
+    border: 1px solid var(--c-primary);
+    color: var(--c-text);
+    padding: 0.8rem 1.2rem;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+}
+#fps-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}

@@ -608,6 +608,26 @@ function setupEventListeners() {
         Settings.set('sfxVolume', v);
         AudioManager.setSfxVolume(v);
     });
+    
+    document.getElementById('select-fps').addEventListener('change', (e) => {
+        AudioManager.playTap();
+        Settings.set('fpsLimit', e.target.value);
+        
+        // Reset detection logic
+        targetFpsFallback = 0;
+        fpsHistory = [];
+        const requested = parseInt(e.target.value);
+        if (requested === 90 || requested === 120) {
+            fpsDetectionActive = true;
+            fpsDetectionStartTime = performance.now();
+        }
+    });
+
+    document.getElementById('btn-show-fps').addEventListener('click', () => {
+        AudioManager.playTap();
+        Settings.set('showFps', !Settings.get('showFps'));
+        ui.applySettingsToUI();
+    });
 }
 
 function startGame(mode, savedState = null) {
@@ -806,8 +826,86 @@ function handleGameOver() {
     }, 1000);
 }
 
+// ── Performance Monitor State ────────────────────────────────
+let lastFrameTime = 0;
+let framesThisSecond = 0;
+let lastFpsUpdateTime = 0;
+let currentFps = 0;
+let fpsHistory = [];
+let maxHistory = 10; // 10 seconds of history for average
+
+// For FPS detection and fallback
+let fpsDetectionStartTime = 0;
+let fpsDetectionActive = false;
+let targetFpsFallback = 0;
+
 // ── Render Loop ──────────────────────────────────────────────
 function animate() {
+    const now = performance.now();
+    
+    let targetFpsSetting = Settings.get('fpsLimit');
+    
+    let targetFps = 0; // 0 means unlimited/auto
+    if (targetFpsSetting !== 'auto' && targetFpsSetting !== 'unlimited') {
+        targetFps = parseInt(targetFpsSetting);
+    }
+    
+    if (targetFpsFallback > 0 && targetFps > targetFpsFallback) {
+        targetFps = targetFpsFallback;
+    }
+    
+    if (targetFps > 0) {
+        const minFrameTime = 1000 / targetFps;
+        const elapsed = now - lastFrameTime;
+        if (elapsed < minFrameTime) {
+            return; // Skip this frame
+        }
+        lastFrameTime = now - (elapsed % minFrameTime);
+    } else {
+        lastFrameTime = now;
+    }
+    
+    // Performance Metrics
+    framesThisSecond++;
+    if (now - lastFpsUpdateTime >= 1000) {
+        currentFps = framesThisSecond;
+        framesThisSecond = 0;
+        lastFpsUpdateTime = now;
+        
+        fpsHistory.push(currentFps);
+        if (fpsHistory.length > maxHistory) fpsHistory.shift();
+        
+        // Detection Logic
+        if (fpsDetectionActive) {
+            if (now - fpsDetectionStartTime > 2000) { // wait 2s to stabilize
+                fpsDetectionActive = false;
+                const requested = parseInt(targetFpsSetting);
+                if (requested === 90 || requested === 120) {
+                    const avg = fpsHistory.reduce((a,b)=>a+b,0) / fpsHistory.length;
+                    if (avg < requested - 15) { // If significantly lower
+                        targetFpsFallback = avg > 75 ? 90 : 60;
+                        let fallbackMsg = Settings.t('fpsNotSupported')
+                            .replace('{fps}', requested)
+                            .replace('{fallback}', targetFpsFallback);
+                        if (ui && ui.showFpsToast) {
+                            ui.showFpsToast(fallbackMsg);
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (Settings.get('showFps')) {
+            const perfFps = document.getElementById('perf-fps');
+            const perfAvg = document.getElementById('perf-avg');
+            if (perfFps) perfFps.textContent = currentFps;
+            if (perfAvg) {
+                const avgFps = Math.round(fpsHistory.reduce((a,b)=>a+b,0) / Math.max(1, fpsHistory.length));
+                perfAvg.textContent = avgFps;
+            }
+        }
+    }
+
     const dt = clock.getDelta();
     
     if (boardManager && game && scene) {
@@ -820,6 +918,11 @@ function animate() {
     }
     
     renderer.render(scene, camera);
+    
+    if (Settings.get('showFps')) {
+         const perfTime = document.getElementById('perf-time');
+         if (perfTime) perfTime.textContent = (performance.now() - now).toFixed(1);
+    }
 }
 
 // Bootstrap

@@ -89,6 +89,17 @@ class UIManager {
         this.els.hud.statusMsg.style.opacity = '1';
     }
 
+    showFpsToast(msg) {
+        const toast = document.getElementById('fps-toast');
+        const text = document.getElementById('fps-toast-text');
+        if (!toast || !text) return;
+        text.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4000);
+    }
+
     // ── Win Screen ───────────────────────────────────────────
     showWinScreen(game, mode) {
         this.hideModals();
@@ -142,6 +153,18 @@ class UIManager {
         // Sliders
         document.getElementById('slide-music').value = Settings.get('musicVolume');
         document.getElementById('slide-sfx').value = Settings.get('sfxVolume');
+        
+        // FPS Settings
+        const fpsSelect = document.getElementById('select-fps');
+        if (fpsSelect) fpsSelect.value = Settings.get('fpsLimit');
+        
+        const btnShowFps = document.getElementById('btn-show-fps');
+        if (btnShowFps) btnShowFps.textContent = Settings.get('showFps') ? Settings.t('on') : Settings.t('off');
+        
+        const perfMonitor = document.getElementById('perf-monitor');
+        if (perfMonitor) {
+            perfMonitor.style.display = Settings.get('showFps') ? 'block' : 'none';
+        }
         
         // Theme application
         document.body.className = Settings.get('theme');

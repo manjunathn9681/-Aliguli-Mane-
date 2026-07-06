@@ -135,6 +135,19 @@
                 <span id="custom-toast-text"></span>
             </div>
 
+            <!-- Performance Monitor Overlay -->
+            <div id="perf-monitor" style="display:none;">
+                <div class="perf-row"><span class="perf-label">FPS:</span> <span id="perf-fps">0</span></div>
+                <div class="perf-row"><span class="perf-label">Avg:</span> <span id="perf-avg">0</span></div>
+                <div class="perf-row"><span class="perf-label">Time:</span> <span id="perf-time">0.0</span>ms</div>
+            </div>
+
+            <!-- FPS Compatibility Toast -->
+            <div id="fps-toast">
+                <span class="toast-icon">⚠️</span>
+                <span id="fps-toast-text"></span>
+            </div>
+
 
             <!-- Bottom HUD (Player 1) -->
             <div class="hud-bottom">
@@ -193,6 +206,28 @@
                     </div>
                 </div>
                 
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--c-border);">
+                
+                <h3 style="margin-bottom: 1rem; color: var(--c-text); font-size: 1.1rem; text-align: left;" data-i18n="performance">Performance</h3>
+                <div class="settings-grid" style="margin-bottom: 1rem;">
+                    <div class="setting-item">
+                        <label data-i18n="fpsLimit">FPS Limit</label>
+                        <select id="select-fps" class="btn" style="text-align: center; appearance: none; padding: 0.6rem;">
+                            <option value="auto" data-i18n="fpsAuto">Auto (Recommended)</option>
+                            <option value="30">30 FPS</option>
+                            <option value="45">45 FPS</option>
+                            <option value="60">60 FPS</option>
+                            <option value="90">90 FPS</option>
+                            <option value="120">120 FPS</option>
+                            <option value="unlimited" data-i18n="fpsUnlimited">Unlimited</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label data-i18n="showFps">Monitor</label>
+                        <button class="btn" id="btn-show-fps">Off</button>
+                    </div>
+                </div>
+
                 <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--c-border);">
                 
                 <div class="setting-item" style="margin-bottom: 1rem;">
